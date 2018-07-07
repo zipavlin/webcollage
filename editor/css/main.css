@@ -1,0 +1,83 @@
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: 'Raleway', sans-serif; }
+
+.blank {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: none;
+  background: none; }
+
+button:not(.blank) {
+  height: 36px;
+  border-radius: 18px;
+  background-color: deeppink;
+  text-transform: uppercase;
+  color: #0d121d;
+  font-weight: 300;
+  border: none;
+  padding: 0 20px;
+  cursor: pointer; }
+
+#nav {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 50px;
+  padding: 0 30px;
+  background-color: #0d121d;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box; }
+  #nav h1 {
+    color: deeppink;
+    font-weight: 300; }
+
+#stage {
+  position: relative; }
+
+.collage-item {
+  position: absolute;
+  display: block;
+  overflow: hidden;
+  border: 1px dotted transparent; }
+  .collage-item:hover, .collage-item[data-selected="true"] {
+    border-color: #b8b7b7; }
+    .collage-item:hover .collage-item-nav, .collage-item[data-selected="true"] .collage-item-nav {
+      opacity: 1; }
+  .collage-item-child {
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; }
+  .collage-item-nav {
+    position: absolute;
+    display: flex;
+    top: 50%;
+    left: 50%;
+    transform: translate3d(-50%, -50%, 0);
+    opacity: 0;
+    transition: opacity .35s;
+    z-index: 2; }
+    .collage-item-nav-btn {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      background-color: #fff;
+      border: 2px solid #0d121d;
+      border-radius: 50%;
+      outline: none;
+      flex: none;
+      margin: 0 3px;
+      cursor: pointer; }
+      .collage-item-nav-btn svg {
+        position: absolute;
+        display: block;
+        width: 18px;
+        height: 18px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%); }

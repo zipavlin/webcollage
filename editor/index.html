@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Web collage editor</title>
+    <link href="https://fonts.googleapis.com/css?family=Raleway:300,400,600" rel="stylesheet">
+    <link rel="stylesheet" href="/editor/css/main.css">
+</head>
+<body>
+    <div id="app">
+        <nav id="nav">
+            <h1>Editor</h1>
+            <button id="add-new" @click="addNew">add new component</button>
+        </nav>
+        <div id="stage">
+            <collage-item v-for="(item ,i) of items" :key="i" :index="i" :item="item"></collage-item>
+
+        </div>
+    </div>
+    <script defer src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script defer src="https://unpkg.com/vuex@2.0.0"></script>
+    <script defer src="http://code.interactjs.io/v1.3.4/interact.min.js"></script>
+    <script defer src="/editor/js/main.js"></script>
+</body>
+</html>
