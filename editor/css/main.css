@@ -16,10 +16,11 @@ button:not(.blank) {
   background-color: deeppink;
   text-transform: uppercase;
   color: #0d121d;
-  font-weight: 300;
+  font-weight: 500;
   border: none;
   padding: 0 20px;
-  cursor: pointer; }
+  cursor: pointer;
+  outline: none; }
 
 #nav {
   position: relative;
@@ -34,9 +35,28 @@ button:not(.blank) {
   #nav h1 {
     color: deeppink;
     font-weight: 300; }
+  #nav-wrap button:not(:last-child) {
+    margin-right: 6px; }
+  #nav hr {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    height: 30px;
+    width: 1px;
+    background-color: deeppink;
+    margin: 0 20px;
+    border: none; }
+  #nav span {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    color: deeppink;
+    font-size: 14px;
+    margin-right: 12px; }
 
 #stage {
-  position: relative; }
+  position: relative;
+  perspective: 1000px; }
 
 .collage-item {
   position: absolute;

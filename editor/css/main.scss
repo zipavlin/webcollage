@@ -21,10 +21,11 @@ button:not(.blank) {
   background-color: $color-main;
   text-transform: uppercase;
   color: $color-black;
-  font-weight: 300;
+  font-weight: 500;
   border: none;
   padding: 0 20px;
   cursor: pointer;
+  outline: none;
 }
 #nav {
   position: relative;
@@ -40,9 +41,31 @@ button:not(.blank) {
     color: $color-main;
     font-weight: 300;
   }
+  &-wrap button:not(:last-child) {
+    margin-right: 6px;
+  }
+  hr {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    height: 30px;
+    width: 1px;
+    background-color: $color-main;
+    margin: 0 20px;
+    border: none;
+  }
+  span {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    color: $color-main;
+    font-size: 14px;
+    margin-right: 12px;
+  }
 }
 #stage {
   position: relative;
+  perspective: 1000px;
 }
 
 .collage-item {

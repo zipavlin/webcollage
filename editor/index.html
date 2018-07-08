@@ -11,16 +11,26 @@
     <div id="app">
         <nav id="nav">
             <h1>Editor</h1>
-            <button id="add-new" @click="addNew">add new component</button>
+            <div id="nav-wrap">
+                <span>Zoom ({{zoom}}%)</span>
+                <button id="zoom-out" @click="zoomOut" title="zoom out">-</button>
+                <button id="zoom-in" @click="zoomIn" title="zoom in">+</button>
+                <hr>
+                <button id="add-new" @click="addNew" title="add new component to collage">add new component</button>
+            </div>
         </nav>
         <div id="stage">
             <collage-item v-for="(item ,i) of items" :key="i" :index="i" :item="item"></collage-item>
-
         </div>
     </div>
+    <!-- vue, vuex, interact.io -->
     <script defer src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script defer src="https://unpkg.com/vuex@2.0.0"></script>
     <script defer src="http://code.interactjs.io/v1.3.4/interact.min.js"></script>
-    <script defer src="/editor/js/main.js"></script>
+
+    <!-- vue app -->
+    <script defer src="/editor/js/store.js"></script>
+    <script defer src="/editor/js/components.js"></script>
+    <script defer src="/editor/js/app.js"></script>
 </body>
 </html>

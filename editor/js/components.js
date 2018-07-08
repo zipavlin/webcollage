@@ -1,10 +1,17 @@
-// components
-Vue.component('collage-clip', {
+// cliping tool
+Vue.component('clipping-tool', {
     props: ['width', 'height', 'clip'],
-    template: `<svg :width="width" :height="height" viewBox="0 0 ${width} ${height}">
+    computed: {
+        viewbox() {
+            return `0 0 ${this.width} ${this.height}`;
+        }
+    },
+    template: `<svg :width="width" :height="height" :viewBox="viewbox">
         <polygon :points="clip"></polygon>
     </svg>`
 });
+
+// collage item
 Vue.component('collage-item', {
     props: ['item', 'index'],
     data() {
@@ -16,12 +23,12 @@ Vue.component('collage-item', {
     computed: {
         style() {
             return {
-                width: (this.item.width ? this.item.width : 200) + 'px',
-                height: (this.item.height ? this.item.height : 100) + 'px',
+                width: (this.item.width ? this.item.width : window.innerWidth) + 'px',
+                height: (this.item.height ? this.item.height : window.innerHeight) + 'px',
                 top: (this.item.top ? this.item.top : 0) + 'px',
                 left: (this.item.left ? this.item.left : 0) + 'px',
                 clipPath: this.item.clip ? `polygon(${this.item.clip})` : 'none',
-                transform: `rotate(${this.item.rotate ? this.item.rotate : 0}deg)`,
+                transform: `translateZ(${this.$store.state.zoom}px) rotate(${this.item.rotate ? this.item.rotate : 0}deg)`,
             }
         }
     },
@@ -91,53 +98,4 @@ Vue.component('collage-item', {
             </button>
         </nav>
     </a>`
-});
-
-// store
-const store = new Vuex.Store({
-   state: {
-       items: [
-           {url: 'http://www.espn.com/espn/feature/story/_/id/23851669/espn-body-issue-2018'}
-       ]
-   },
-    mutations: {
-        moveresize (state, payload) {
-           for (let key in payload) {
-               if (payload.hasOwnProperty(key) && key !== 'id') {
-                   switch(key) {
-                       case 'left': case 'top': case 'rotate':
-                           let newValue = (state.items[payload.id][key] || 0) + payload[key];
-                           Vue.set(state.items[payload.id], key, newValue);
-                           break;
-                       default:
-                           Vue.set(state.items[payload.id], key, payload[key]);
-                           break;
-                   }
-               }
-           }
-        },
-        select (state, id) {
-            Vue.set(state.items[id], 'selected', true);
-        },
-        unselect (state, id) {
-            Vue.set(state.items[id], 'selected', false);
-        },
-        resetrotation (state, id) {
-            Vue.set(state.items[id], 'rotate', 0);
-        },
-    }
-});
-
-// app
-const app = new Vue({
-    el: '#app',
-    store,
-    computed: {
-        items() { return this.$store.state.items; }
-    },
-    methods: {
-        addNew: function () {
-
-        }
-    }
 });
