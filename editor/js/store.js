@@ -1,3 +1,4 @@
+// define store
 const store = new Vuex.Store({
    state: {
        items: [
@@ -50,7 +51,11 @@ const store = new Vuex.Store({
             Vue.set(state.items[id], 'selected', false);
         },
         'wrap.addClipPoint': function (state, payload) {
-            state.items[payload.id].points.push([payload.left, payload.top]);
+            if (payload.index) {
+                state.items[payload.id].points.splice(payload.index, 0, [payload.left, payload.top]);
+            } else {
+                state.items[payload.id].points.push([payload.left, payload.top]);
+            }
         },
 
         // collage item child handlers

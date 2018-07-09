@@ -28,6 +28,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://unpkg.com/vuex@2.0.0"></script>
     <script src="http://code.interactjs.io/v1.3.4/interact.min.js"></script>
+    <script src="/editor/js/vuex-undo-redo.min.js"></script>
 
     <!-- vue app -->
     <script src="/editor/js/store.js"></script>
@@ -40,6 +41,19 @@
                 items() { return this.$store.state.items; },
                 zoom() { return this.$store.state.zoom },
                 itemContextMenu() { return this.$store.state.itemContextMenu; }
+            },
+            mounted() {
+                // add history key listeners
+                window.addEventListener('keydown', function (e) {
+                    if (e.ctrlKey && e.key === 'z') {
+                        e.preventDefault();
+                        this.undo();
+                    }
+                    else if (e.ctrlKey && e.key === 'y') {
+                        e.preventDefault();
+                        this.redo();
+                    }
+                }.bind(this));
             }
         });
     </script>

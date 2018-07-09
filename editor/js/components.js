@@ -1,3 +1,16 @@
+// helpers
+const getPathLength = (points) => {    
+    return points.reduce((sum, a, i) => {
+        const b = i + 1 === points.length ? points[0] : points[i + 1];
+
+        let dx = Math.abs(b[0] - a[0]),
+            dy = Math.abs(b[1] - a[1]),
+            dc = Math.pow(dx, 2) + Math.pow(dy, 2),
+            c = Math.sqrt(dc);
+        return sum + c;
+    }, 0)
+}
+
 // context menu
 Vue.component('item-context-menu', {
     props: ['left', 'top'],
@@ -50,6 +63,9 @@ Vue.component('clip-tool', {
         },
         path() {
             return this.points.map(x => x.join(',')).join(' ');
+        },
+        length() {
+            return getPathLength(this.points);
         }
     },
     methods: {
@@ -58,16 +74,52 @@ Vue.component('clip-tool', {
             let clickPoint = this.$refs.SVG.createSVGPoint();
             clickPoint.x = e.layerX;
             clickPoint.y = e.layerY;
-            // check if target is polygon
+            // check if target is polygon -> add new point between existing points
             if (this.$refs.polygon && this.$refs.polygon.isPointInStroke(clickPoint)) {
-                console.log('on path');
-                // find point before
-                // add point there
-            } else {
+                // make a copy of array length. It goes to infinitive loop if not
+                const length = Number(this.points.length);
+                // try all positions of new point. If we have a right one, the length shouldn't change
+                for (let i = 1; i <= length; i++) {
+                    // make a deep copy of array
+                    const newPoints = this.points.slice(0, this.points.length);
+                    // add new point
+                    newPoints.splice(i, 0, [clickPoint.x, clickPoint.y]);
+                    // calculate new length
+                    const newLength = getPathLength(newPoints);
+                    if (Math.ceil(newLength) === Math.ceil(this.length)) {
+                        this.$store.commit('wrap.addClipPoint', {
+                            id: this.itemId,
+                            left: e.layerX,
+                            top: e.layerY,
+                            index: i
+                        });
+                    }
+                }
+                
+            }
+            // push new point to path
+            else {
+                let left = e.layerX;
+                let top = e.layerY;
+                // if shift key is pressed we assume user wants to put point in straight line
+                if (e.shiftKey && this.points.length !== 0) {
+                    // get last item value
+                    const lastPoint = this.points.slice(-1)[0];
+
+                    // check which diff is smaller
+                    const dx = Math.abs(left - lastPoint[0]);
+                    const dy = Math.abs(top - lastPoint[1]);                    
+
+                    if (dx > dy) {
+                        top = lastPoint[1];
+                    } else {
+                        left = lastPoint[0];
+                    }
+                }
                 this.$store.commit('wrap.addClipPoint', {
                     id: this.itemId,
-                    left: e.layerX,
-                    top: e.layerY
+                    left,
+                    top
                 });
             }
         },
