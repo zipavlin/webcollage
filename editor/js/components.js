@@ -1,13 +1,82 @@
+// context menu
+Vue.component('item-context-menu', {
+    props: ['left', 'top'],
+    computed: {
+        style() {
+            return {
+                left: this.left + 'px',
+                top: this.top + 'px'
+            }
+        }
+    },
+    mounted() {
+        window.addEventListener('click', this.closeContextMenu);
+    },
+    beforeDestroy() {
+        window.removeEventListener('click', this.closeContextMenu);
+    },
+    methods: {
+        closeContextMenu() {
+            this.$store.commit('itemContextMenu.close');
+        },
+        openClipTool() {},
+        setRotation() {
+
+        },
+        setSize() {},
+        setPosition() {},
+        editChild() {}
+    },
+    template: `<div class="context-menu" :style="style">
+        <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.openClipTool')">open clip tool</button>
+        <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.setRotation')">set rotation</button>
+        <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.setSize')">set size</button>
+        <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.setPosition')">set position</button>
+        <button class="blank context-menu-btn" @click="">edit child object</button>
+    </div>`
+});
+
 // cliping tool
-Vue.component('clipping-tool', {
-    props: ['width', 'height', 'clip'],
+Vue.component('clip-tool', {
+    props: ['width', 'height', 'itemId', 'points'],
+    data() {
+        return {
+            pathHover: false
+        }
+    },
     computed: {
         viewbox() {
             return `0 0 ${this.width} ${this.height}`;
+        },
+        path() {
+            return this.points.map(x => x.join(',')).join(' ');
         }
     },
-    template: `<svg :width="width" :height="height" :viewBox="viewbox">
-        <polygon :points="clip"></polygon>
+    methods: {
+        addPoint(e) {
+            // create click point
+            let clickPoint = this.$refs.SVG.createSVGPoint();
+            clickPoint.x = e.layerX;
+            clickPoint.y = e.layerY;
+            // check if target is polygon
+            if (this.$refs.polygon && this.$refs.polygon.isPointInStroke(clickPoint)) {
+                console.log('on path');
+                // find point before
+                // add point there
+            } else {
+                this.$store.commit('wrap.addClipPoint', {
+                    id: this.itemId,
+                    left: e.layerX,
+                    top: e.layerY
+                });
+            }
+        },
+        setPathHover() {this.pathHover = true; },
+        setPathNormal() {this.pathHover = false; }
+    },
+    template: `<svg ref="SVG" class="clip-tool" :width="width || '100%'" :height="height || '100%'" :viewBox="viewbox" :data-path-hover="pathHover" @click="addPoint">
+        <polygon v-if="points.length > 0" :points="path" ref="polygon" @mouseenter="setPathHover" @mouseleave="setPathNormal"></polygon>
+        <circle v-for="(point, i) of points" :key="i" :index="i" :cx="point[0]" :cy="point[1]" r="2" />
     </svg>`
 });
 
@@ -17,85 +86,94 @@ Vue.component('collage-item', {
     data() {
         return {
             editWrap: false,
-            editChild: false
+            editChild: false,
+            showClipTool: false,
+            interacts: []
         }
     },
     computed: {
         style() {
             return {
-                width: (this.item.width ? this.item.width : window.innerWidth) + 'px',
-                height: (this.item.height ? this.item.height : window.innerHeight) + 'px',
-                top: (this.item.top ? this.item.top : 0) + 'px',
-                left: (this.item.left ? this.item.left : 0) + 'px',
+                width: this.item.width + 'px',
+                height: this.item.height + 'px',
+                top: this.item.top + 'px',
+                left: this.item.left + 'px',
                 clipPath: this.item.clip ? `polygon(${this.item.clip})` : 'none',
                 transform: `translateZ(${this.$store.state.zoom}px) rotate(${this.item.rotate ? this.item.rotate : 0}deg)`,
             }
         }
     },
-    mounted() {
-        // move, resize wrap
-        interact(this.$refs.wrap)
-            .draggable({
-                ignoreFrom: '.collage-item-nav-btn'
-            })
-            .resizable({
-                edges: { left: true, right: true, bottom: true, top: true },
-                restrictSize: {
-                    min: { width: 50, height: 50 },
-                },
-                inertia: true,
-            })
-            .on('dragstart resizestart', function () {
-                this.$store.commit('select', this.index);
-            }.bind(this))
-            .on('dragend resizeend', function () {
-                this.$store.commit('unselect', this.index);
-            }.bind(this))
-            .on('dragmove', function (event) {
-                this.$store.commit('moveresize', {
-                    id: this.index,
-                    left: event.dx,
-                    top: event.dy
-                });
-            }.bind(this))
-            .on('resizemove', function (event) {
-                this.$store.commit('moveresize', {
-                    id: this.index,
-                    width: event.rect.width,
-                    height: event.rect.height,
-                    left: event.deltaRect.left,
-                    top: event.deltaRect.top
-                });
-            }.bind(this));
-        // rotate wrap
-        interact(this.$refs.rotate)
-            .draggable({})
-            .on('dragmove', function (event) {
-                let amount = (Math.abs(event.dx) > Math.abs(event.dy)) ? event.dx : event.dy;
-                this.$store.commit('moveresize', {
-                    id: this.index,
-                    rotate: amount,
-                });
-            }.bind(this))
-    },
-    methods: {
-        resetRotation() {
-            console.log('bla');
-            this.$store.commit('resetrotation', this.index);
+    watch: {
+        item() {
+            if (this.item.cliptool && this.interacts.length > 0) {
+                this.unsetInteracts();
+            } else if (!this.item.cliptool && this.interacts.length < 0) {
+                this.setInteracts();
+            }
         }
     },
-    template: `<a class="collage-item" :style="style" ref="wrap" :data-selected="item.selected">
+    created() {
+        // init empty values
+        this.$store.commit('wrap.setInitialState', this.index);
+    },
+    mounted() {
+        // set interacts
+        this.setInteracts();
+    },
+    beforeDestroy() {
+        this.unsetInteracts();
+    },
+    methods: {
+        openContextMenu(e) {
+            e.preventDefault();
+            this.$store.commit('itemContextMenu.open', {
+                id: this.index,
+                left: e.clientX,
+                top: e.clientY
+            });
+        },
+        setInteracts() {
+            const wrap_moveresize = interact(this.$refs.wrap)
+                .draggable({})
+                .resizable({
+                    edges: { left: true, right: true, bottom: true, top: true },
+                    restrictSize: {
+                        min: { width: 50, height: 50 },
+                    },
+                    inertia: true,
+                })
+                .on('dragstart resizestart', function () {
+                    this.$store.commit('wrap.select', this.index);
+                }.bind(this))
+                .on('dragend resizeend', function () {
+                    this.$store.commit('wrap.unselect', this.index);
+                }.bind(this))
+                .on('dragmove', function (event) {
+                    this.$store.commit('wrap.moveresize', {
+                        id: this.index,
+                        left: event.dx,
+                        top: event.dy
+                    });
+                }.bind(this))
+                .on('resizemove', function (event) {
+                    this.$store.commit('wrap.moveresize', {
+                        id: this.index,
+                        width: event.rect.width,
+                        height: event.rect.height,
+                        left: event.deltaRect.left,
+                        top: event.deltaRect.top
+                    });
+                }.bind(this));
+            this.interacts.push(wrap_moveresize);
+        },
+        unsetInteracts() {
+            this.interacts.forEach(int => int.unset());
+            // empty array
+            this.interacts = [];
+        }
+    },
+    template: `<a class="collage-item" :style="style" ref="wrap" :data-selected="item.selected" @contextmenu="openContextMenu">
         <iframe class="collage-item-child" :src="item.url" frameborder="0" ref="child"></iframe>
-        <nav class="collage-item-nav" ref="nav">
-            <button class="blank collage-item-nav-btn" ref="reset" @click="resetRotation">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M23.954 21.03l-9.184-9.095 9.092-9.174-2.832-2.807-9.09 9.179-9.176-9.088-2.81 2.81 9.186 9.105-9.095 9.184 2.81 2.81 9.112-9.192 9.18 9.1z"/></svg>
-            </button>
-            <button class="blank collage-item-nav-btn" ref="rotate">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M18.885 3.515c-4.617-4.618-12.056-4.676-16.756-.195l-2.129-2.258v7.938h7.484l-2.066-2.191c2.82-2.706 7.297-2.676 10.073.1 4.341 4.341 1.737 12.291-5.491 12.291v4.8c3.708 0 6.614-1.244 8.885-3.515 4.686-4.686 4.686-12.284 0-16.97z"/></svg>
-            </button>
-            <button class="blank collage-item-nav-btn" ref="clip">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M19.769 9.923l-12.642 12.639-7.127 1.438 1.438-7.128 12.641-12.64 5.69 5.691zm1.414-1.414l2.817-2.82-5.691-5.689-2.816 2.817 5.69 5.692z"/></svg>
-            </button>
-        </nav>
+        <clip-tool v-if="item.cliptool" :item-id="index" :width="item.width" :height="item.height" :points="item.points || []"></clip-tool>
     </a>`
 });

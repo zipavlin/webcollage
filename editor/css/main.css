@@ -101,3 +101,40 @@ button:not(.blank) {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%); }
+
+.context-menu {
+  position: absolute;
+  display: block;
+  background-color: #fff;
+  box-shadow: 0 0 7px rgba(0, 0, 0, 0.3);
+  padding: 0; }
+  .context-menu-btn {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding: 10px 20px;
+    box-sizing: border-box;
+    background-color: #fff;
+    cursor: pointer;
+    outline: none;
+    text-align: left; }
+    .context-menu-btn:hover {
+      background-color: #eee; }
+
+.clip-tool {
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0; }
+  .clip-tool[data-path-hover="true"] polygon {
+    stroke-width: 4px; }
+  .clip-tool[data-path-hover="true"] circle {
+    r: 4px;
+    transition: r .25s; }
+  .clip-tool polygon {
+    stroke: #0d121d;
+    stroke-width: 2px;
+    fill: transparent;
+    transition: stroke-width .25s; }
+  .clip-tool circle:hover {
+    r: 4px; }

@@ -120,3 +120,51 @@ button:not(.blank) {
     }
   }
 }
+
+.context-menu {
+  position: absolute;
+  display: block;
+  background-color: #fff;
+  box-shadow: 0 0 7px rgba(0,0,0,.3);
+  padding: 0;
+  &-btn {
+    display: block;
+    position: relative;
+    width: 100%;
+    padding: 10px 20px;
+    box-sizing: border-box;
+    background-color: #fff;
+    cursor: pointer;
+    outline: none;
+    text-align: left;
+    &:hover {
+      background-color: #eee;
+    }
+  }
+}
+
+.clip-tool {
+  $circle-hover-size: 4px;
+  position: absolute;
+  display: block;
+  top: 0;
+  left: 0;
+  &[data-path-hover="true"] {
+    polygon {
+      stroke-width: $circle-hover-size;
+    }
+    circle {
+      r: $circle-hover-size;
+      transition: r .25s;
+    }
+  }
+  polygon {
+    stroke: $color-black;
+    stroke-width: 2px;
+    fill: transparent;
+    transition: stroke-width .25s;
+  }
+  circle:hover {
+    r: $circle-hover-size;
+  }
+}

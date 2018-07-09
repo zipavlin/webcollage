@@ -13,24 +13,35 @@
             <h1>Editor</h1>
             <div id="nav-wrap">
                 <span>Zoom ({{zoom}}%)</span>
-                <button id="zoom-out" @click="zoomOut" title="zoom out">-</button>
-                <button id="zoom-in" @click="zoomIn" title="zoom in">+</button>
+                <button id="zoom-out" @click="$store.commit('stage.zoomOut')" title="zoom out">-</button>
+                <button id="zoom-in" @click="$store.commit('stage.zoomIn')" title="zoom in">+</button>
                 <hr>
-                <button id="add-new" @click="addNew" title="add new component to collage">add new component</button>
+                <button id="add-new" @click="$store.commit('stage.addNew')" title="add new component to collage">add new component</button>
             </div>
         </nav>
         <div id="stage">
             <collage-item v-for="(item ,i) of items" :key="i" :index="i" :item="item"></collage-item>
         </div>
+        <item-context-menu v-if="itemContextMenu.open" :left="itemContextMenu.left" :top="itemContextMenu.top"></item-context-menu>
     </div>
     <!-- vue, vuex, interact.io -->
-    <script defer src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script defer src="https://unpkg.com/vuex@2.0.0"></script>
-    <script defer src="http://code.interactjs.io/v1.3.4/interact.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/vuex@2.0.0"></script>
+    <script src="http://code.interactjs.io/v1.3.4/interact.min.js"></script>
 
     <!-- vue app -->
-    <script defer src="/editor/js/store.js"></script>
-    <script defer src="/editor/js/components.js"></script>
-    <script defer src="/editor/js/app.js"></script>
+    <script src="/editor/js/store.js"></script>
+    <script src="/editor/js/components.js"></script>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            store,
+            computed: {
+                items() { return this.$store.state.items; },
+                zoom() { return this.$store.state.zoom },
+                itemContextMenu() { return this.$store.state.itemContextMenu; }
+            }
+        });
+    </script>
 </body>
 </html>
