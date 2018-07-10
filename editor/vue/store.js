@@ -1,17 +1,22 @@
-// define store
-const store = new Vuex.Store({
-   state: {
-       items: [
-           {url: 'http://interactjs.io/docs'}
-       ],
-       zoom: 0,
-       itemContextMenu: {
-           id: null,
-           top: 0,
-           left: 0,
-           open: false
-       }
-   },
+import Vue from 'vue';
+import Vuex from 'vuex';
+import history from './history';
+
+Vue.use(Vuex);
+
+export default new Vuex.Store({
+    state: {
+        items: [
+            {url: 'http://interactjs.io/docs'}
+        ],
+        zoom: 0,
+        itemContextMenu: {
+            id: null,
+            top: 0,
+            left: 0,
+            open: false
+        }
+    },
     mutations: {
         // item wrap handlers
         'wrap.setInitialState': function (state, id) {
@@ -56,6 +61,7 @@ const store = new Vuex.Store({
             } else {
                 state.items[payload.id].points.push([payload.left, payload.top]);
             }
+            history.saveSnapshot();
         },
 
         // collage item child handlers
