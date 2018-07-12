@@ -11,9 +11,10 @@
             </div>
         </nav>
         <div id="stage">
-            <move-resize-rotate>
-                <h1>Hello world</h1>
-            </move-resize-rotate>
+            <div :style="style">
+                <mrr-tool v-model="mrr"></mrr-tool>
+            </div>
+
         </div>
         <!--
         <div id="stage">
@@ -33,7 +34,7 @@
 <script>
     import ContextMenu from './ContextMenu.vue';
     import CollageItem from './CollageItem.vue';
-    import MoveResizeRotate from './MoveResizeRotate.vue';
+    import MrrTool from './MrrTool.vue';
     import history from './history';
 
     export default {
@@ -41,12 +42,34 @@
         components: {
             ContextMenu,
             CollageItem,
-            MoveResizeRotate
+            MrrTool
+        },
+        data() {
+            return {
+                mrr: {
+                    width: 200,
+                    height: 100,
+                    x: 0,
+                    y: 0,
+                    angle: 0
+                }
+            }
         },
         computed: {
             items() { return this.$store.state.items; },
             zoom() { return this.$store.state.zoom },
-            itemContextMenu() { return this.$store.state.itemContextMenu; }
+            itemContextMenu() { return this.$store.state.itemContextMenu; },
+            style() {
+                return {
+                    position: 'absolute',
+                    top: this.mrr.y + 'px',
+                    left: this.mrr.x + 'px',
+                    width: this.mrr.width + 'px',
+                    height: this.mrr.height + 'px',
+                    transform: `rotate(${this.mrr.angle}deg)`,
+                    transformOrigin: 'center center'
+                };
+            }
         },
         mounted() {
             // add history key listeners
