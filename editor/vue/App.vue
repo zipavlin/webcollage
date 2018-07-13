@@ -14,7 +14,6 @@
             <div :style="style">
                 <mrr-tool v-model="mrr"></mrr-tool>
             </div>
-
         </div>
         <!--
         <div id="stage">
@@ -83,6 +82,11 @@
                     history.redo();
                 }
             }.bind(this));
+        },
+        methods: {
+            onContextMenu(e) {
+                console.log(e);
+            }
         }
     }
 </script>

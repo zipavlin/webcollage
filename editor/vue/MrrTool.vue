@@ -1,36 +1,37 @@
 <template>
-    <svg class="mrr-tool" ref="mrr" :data-action="action" :data-in-progress="inProgress" :width="wrapSize" :height="wrapSize" :viewBox="viewBox" :style="style">
+    <svg class="mrr-tool" ref="mrr" :data-action="action" :data-in-progress="inProgress" :width="wrapWidth" :height="wrapHeight" :viewBox="viewBox" :style="style">
         <!-- rotate guide -->
-        <circle class="mrr-tool-rotate guide" v-if="!isMobile" :cx="outerRadius" :cy="outerRadius" :r="outerRadius"></circle>
+        <circle class="mrr-tool-rotate guide" v-if="mOptions.rotate" :cx="outerRadius" :cy="outerRadius" :r="outerRadius - (isMobile ? (mOptions.resizeSize) : 0)"></circle>
+        <circle class="mrr-tool-rotate" v-if="isMobile && mOptions.rotate" :cx="wrapWidth / 2 - (mOptions.strokeWidth)" :cy="mOptions.resizeSize / 2 + (mOptions.strokeWidth * 2)" :r="mOptions.resizeSize" :fill="mOptions.fill" ref="rotateMobile"></circle>
         <!-- move handle -->
-        <rect class="mrr-tool-move" ref="move" :x="paddingLeft" :y="paddingTop" :width="value.width" :height="value.height"></rect>
+        <rect class="mrr-tool-move" v-if="mOptions.move" ref="move" :x="paddingLeft" :y="paddingTop" :width="value.width" :height="value.height" @contextmenu="onContextMenu"></rect>
         <!-- resize handles -->
-        <g class="mrr-tool-resize-handles" v-if="!isMobile">
-            <rect class="mrr-tool-resize resize-diagonal nwse top-left" :x="paddingLeft - (settings.resizeSize / 2)" :y="paddingTop - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeTopLeft"></rect>
-            <rect class="mrr-tool-resize resize-vertical top" :x="paddingLeft + (value.width / 2) - (settings.resizeSize / 2)" :y="paddingTop - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeTop"></rect>
-            <rect class="mrr-tool-resize resize-diagonal nesw top-right" :x="paddingLeft + value.width - (settings.resizeSize / 2)" :y="paddingTop - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeTopRight"></rect>
-            <rect class="mrr-tool-resize resize-horizontal right" :x="paddingLeft + value.width - (settings.resizeSize / 2)" :y="paddingTop + (value.height / 2) - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeRight"></rect>
-            <rect class="mrr-tool-resize resize-diagonal nwse bottom-right" :x="paddingLeft + value.width - (settings.resizeSize / 2)" :y="paddingTop + value.height - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeBottomRight"></rect>
-            <rect class="mrr-tool-resize resize-vertical bottom" :x="paddingLeft + (value.width / 2) - (settings.resizeSize / 2)" :y="paddingTop + value.height - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeBottom"></rect>
-            <rect class="mrr-tool-resize resize-diagonal nesw bottom-left" :x="paddingLeft - (settings.resizeSize / 2)" :y="paddingTop + value.height - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeBottomLeft"></rect>
-            <rect class="mrr-tool-resize resize-horizontal left" :x="paddingLeft - (settings.resizeSize / 2)" :y="paddingTop + (value.height / 2) - (settings.resizeSize / 2)" :width="settings.resizeSize" :height="settings.resizeSize" :fill="settings.fill" ref="resizeLeft"></rect>
+        <g class="mrr-tool-resize-handles" v-if="!isMobile && mOptions.resize">
+            <rect class="mrr-tool-resize resize-diagonal nwse top-left" :x="paddingLeft - (mOptions.resizeSize / 2)" :y="paddingTop - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeTopLeft"></rect>
+            <rect class="mrr-tool-resize resize-vertical top" :x="paddingLeft + (value.width / 2) - (mOptions.resizeSize / 2)" :y="paddingTop - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeTop"></rect>
+            <rect class="mrr-tool-resize resize-diagonal nesw top-right" :x="paddingLeft + value.width - (mOptions.resizeSize / 2)" :y="paddingTop - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeTopRight"></rect>
+            <rect class="mrr-tool-resize resize-horizontal right" :x="paddingLeft + value.width - (mOptions.resizeSize / 2)" :y="paddingTop + (value.height / 2) - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeRight"></rect>
+            <rect class="mrr-tool-resize resize-diagonal nwse bottom-right" :x="paddingLeft + value.width - (mOptions.resizeSize / 2)" :y="paddingTop + value.height - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeBottomRight"></rect>
+            <rect class="mrr-tool-resize resize-vertical bottom" :x="paddingLeft + (value.width / 2) - (mOptions.resizeSize / 2)" :y="paddingTop + value.height - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeBottom"></rect>
+            <rect class="mrr-tool-resize resize-diagonal nesw bottom-left" :x="paddingLeft - (mOptions.resizeSize / 2)" :y="paddingTop + value.height - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeBottomLeft"></rect>
+            <rect class="mrr-tool-resize resize-horizontal left" :x="paddingLeft - (mOptions.resizeSize / 2)" :y="paddingTop + (value.height / 2) - (mOptions.resizeSize / 2)" :width="mOptions.resizeSize" :height="mOptions.resizeSize" :fill="mOptions.fill" ref="resizeLeft"></rect>
         </g>
         <!-- rotate handles -->
-        <g class="mrr-tool-rotate-handles" v-if="!isMobile">
-            <circle class="mrr-tool-rotate nesw top-left" :cx="paddingLeft - settings.padding + settings.rotateSize - settings.strokeWidth" :cy="paddingTop - settings.padding + settings.rotateSize + settings.strokeWidth" :r="settings.rotateSize" :fill="settings.fill" ref="rotateTopLeft"></circle>
-            <circle class="mrr-tool-rotate nwse top-right" :cx="(paddingLeft + value.width) + settings.padding - settings.rotateSize - (settings.strokeWidth / 2)" :cy="paddingTop - settings.padding + settings.rotateSize + (settings.strokeWidth / 2)" :r="settings.rotateSize" :fill="settings.fill" ref="rotateTopRight"></circle>
-            <circle class="mrr-tool-rotate nesw bottom-right" :cx="(paddingLeft + value.width) + settings.padding - (settings.rotateSize + settings.strokeWidth)" :cy="(paddingTop + value.height) + settings.padding - (settings.rotateSize + settings.strokeWidth)" :r="settings.rotateSize" :fill="settings.fill" ref="rotateBottomRight"></circle>
-            <circle class="mrr-tool-rotate nwse bottom-left" :cx="paddingLeft - settings.padding + (settings.rotateSize + (settings.strokeWidth / 2))" :cy="(paddingTop + value.height) + settings.padding - (settings.rotateSize + (settings.strokeWidth / 2))" :r="settings.rotateSize" :fill="settings.fill" ref="rotateBottomLeft"></circle>
+        <g class="mrr-tool-rotate-handles" v-if="!isMobile && mOptions.rotate">
+            <circle class="mrr-tool-rotate nesw top-left" :cx="paddingLeft - mOptions.padding + mOptions.rotateSize - mOptions.strokeWidth" :cy="paddingTop - mOptions.padding + mOptions.rotateSize + mOptions.strokeWidth" :r="mOptions.rotateSize" :fill="mOptions.fill" ref="rotateTopLeft"></circle>
+            <circle class="mrr-tool-rotate nwse top-right" :cx="(paddingLeft + value.width) + mOptions.padding - mOptions.rotateSize - (mOptions.strokeWidth / 2)" :cy="paddingTop - mOptions.padding + mOptions.rotateSize + (mOptions.strokeWidth / 2)" :r="mOptions.rotateSize" :fill="mOptions.fill" ref="rotateTopRight"></circle>
+            <circle class="mrr-tool-rotate nesw bottom-right" :cx="(paddingLeft + value.width) + mOptions.padding - (mOptions.rotateSize + mOptions.strokeWidth)" :cy="(paddingTop + value.height) + mOptions.padding - (mOptions.rotateSize + mOptions.strokeWidth)" :r="mOptions.rotateSize" :fill="mOptions.fill" ref="rotateBottomRight"></circle>
+            <circle class="mrr-tool-rotate nwse bottom-left" :cx="paddingLeft - mOptions.padding + (mOptions.rotateSize + (mOptions.strokeWidth / 2))" :cy="(paddingTop + value.height) + mOptions.padding - (mOptions.rotateSize + (mOptions.strokeWidth / 2))" :r="mOptions.rotateSize" :fill="mOptions.fill" ref="rotateBottomLeft"></circle>
         </g>
         <!-- action -->
-        <transition name="fade">
-            <text v-if="action !== null" class="mrr-tool-action" text-anchor="middle" :x="outerRadius" :y="outerRadius" dy="7" stroke="none" :fill="settings.stroke">{{action}}</text>
+        <transition name="fade" v-if="mOptions.action">
+            <text v-if="action !== null" class="mrr-tool-action" text-anchor="middle" :x="wrapWidth / 2" :y="wrapHeight / 2" dy="7" stroke="none" :fill="mOptions.stroke">{{action}}</text>
         </transition>
     </svg>
 </template>
 
 <script>
-    import hammer from 'hammerjs';
+    import Hammer from 'hammerjs';
 
     const _getAngle = (e, rect) => {
         const center = [
@@ -53,21 +54,17 @@
                 }),
                 type: Object
             },
-            settings: {
-                default: () => ({
-                    padding: 26,
-                    stroke: '#00C2FF',
-                    strokeWidth: 2,
-                    fill: 'white',
-                    resizeSize: 10,
-                    rotateSize: 6
-                }),
+            options: {
+                default: () => ({}),
                 type: Object
             }
         },
         data() {
             return {
                 prevAngle: 0,
+                realAngle: 0,
+                prevDeltaX: 0,
+                prevDeltaY: 0,
                 action: null,
                 inProgress: false,
                 rotation: false,
@@ -76,64 +73,265 @@
             }
         },
         computed: {
+            // mOptions merged from props and default
+            mOptions() {
+                return Object.assign({
+                    padding: 26,
+                    stroke: '#00C2FF',
+                    strokeWidth: 2,
+                    fill: 'white',
+                    resizeSize: 10,
+                    rotateSize: 6,
+                    move: true,
+                    resize: true,
+                    rotate: true,
+                    action: true
+                }, this.options);
+            },
+            // outer radius of rotate guide
             outerRadius() {
-                const width = ((this.value.width / 2) + this.settings.padding - (this.settings.rotateSize + (this.settings.strokeWidth / 2)));
-                const height = ((this.value.height / 2) + this.settings.padding - (this.settings.rotateSize + (this.settings.strokeWidth / 2)));
+                const width = ((this.value.width / 2) + this.mOptions.padding - (this.mOptions.rotateSize + (this.mOptions.strokeWidth / 2)));
+                const height = ((this.value.height / 2) + this.mOptions.padding - (this.mOptions.rotateSize + (this.mOptions.strokeWidth / 2)));
                 return Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
             },
-            wrapSize() {
-                return (this.outerRadius * 2) + (this.settings.strokeWidth * 2);
+            // size of wrap
+            wrapWidth() {
+                let width;
+                if (this.mOptions.rotate) {
+                    width = (this.outerRadius * 2) + (this.mOptions.strokeWidth * 2);
+                } else if (this.mOptions.resize) {
+                    width = (this.value.width + this.mOptions.resizeSize + (this.mOptions.strokeWidth * 2));
+                } else {
+                    width = (this.value.width + (this.mOptions.strokeWidth * 2));
+                }
+                return width;
             },
+            wrapHeight() {
+                let height;
+                if (this.mOptions.rotate) {
+                    height = (this.outerRadius * 2) + (this.mOptions.strokeWidth * 2);
+                } else if (this.mOptions.resize) {
+                    height = (this.value.height + this.mOptions.resizeSize + (this.mOptions.strokeWidth * 2));
+                } else {
+                    height = (this.value.height + (this.mOptions.strokeWidth * 2));
+                }
+                return height;
+            },
+            // padding left
             paddingLeft() {
-                return ((this.wrapSize - this.value.width) / 2);
+                return ((this.wrapWidth - this.value.width) / 2);
             },
+            // padding top
             paddingTop() {
-                return ((this.wrapSize - this.value.height) / 2);
+                return ((this.wrapHeight - this.value.height) / 2);
             },
+            // viebBox attribute for svg element
             viewBox() {
-                return `-2 -2 ${this.wrapSize}, ${this.wrapSize}`;
+                return this.mOptions.rotate ? `-2 -2 ${this.wrapWidth}, ${this.wrapHeight}` : `0 0 ${this.wrapWidth}, ${this.wrapHeight}`;
             },
+            // svg element style
             style() {
                 return {
                     top: `-${this.paddingTop}px`,
                     left: `-${this.paddingLeft}px`,
-                    stroke: this.settings.stroke,
-                    strokeWidth: `${this.settings.strokeWidth}px`,
+                    stroke: this.mOptions.stroke,
+                    strokeWidth: `${this.mOptions.strokeWidth}px`,
                     fill: 'transparent'
                 }
             }
         },
         mounted() {
+            // desktop listeners
             if (!this.isMobile) {
                 // add resize listeners
-                this.addPanListener(this.$refs.resizeTopLeft,     {width: true,   height: true,   x: true,    y: true,    angle: false}, {invertX: true,  invertY: true}, 'resize');
-                this.addPanListener(this.$refs.resizeTop,         {width: false,  height: true,   x: false,   y: true,    angle: false}, {invertX: false, invertY: true}, 'resize');
-                this.addPanListener(this.$refs.resizeTopRight,    {width: true,   height: true,   x: false,   y: true,    angle: false}, {invertX: false, invertY: true}, 'resize');
-                this.addPanListener(this.$refs.resizeRight,       {width: true,   height: false,  x: false,   y: false,   angle: false}, {invertX: false, invertY: false}, 'resize');
-                this.addPanListener(this.$refs.resizeBottomRight, {width: true,   height: true,   x: false,   y: false,   angle: false}, {invertX: false, invertY: false}, 'resize');
-                this.addPanListener(this.$refs.resizeBottom,      {width: false,  height: true,   x: false,   y: false,   angle: false}, {invertX: false, invertY: false}, 'resize');
-                this.addPanListener(this.$refs.resizeBottomLeft,  {width: true,   height: true,   x: true,    y: false,   angle: false}, {invertX: true,  invertY: false}, 'resize');
-                this.addPanListener(this.$refs.resizeLeft,        {width: true,   height: false,  x: true,    y: false,   angle: false}, {invertX: true,  invertY: false}, 'resize');
+                if (this.mOptions.resize) {
+                    this.addPanListener(this.$refs.resizeTopLeft, {
+                        width: true,
+                        height: true,
+                        x: true,
+                        y: true,
+                        angle: false
+                    }, {invertX: true, invertY: true}, 'resize');
+                    this.addPanListener(this.$refs.resizeTop, {
+                        width: false,
+                        height: true,
+                        x: false,
+                        y: true,
+                        angle: false
+                    }, {invertX: false, invertY: true}, 'resize');
+                    this.addPanListener(this.$refs.resizeTopRight, {
+                        width: true,
+                        height: true,
+                        x: false,
+                        y: true,
+                        angle: false
+                    }, {invertX: false, invertY: true}, 'resize');
+                    this.addPanListener(this.$refs.resizeRight, {
+                        width: true,
+                        height: false,
+                        x: false,
+                        y: false,
+                        angle: false
+                    }, {invertX: false, invertY: false}, 'resize');
+                    this.addPanListener(this.$refs.resizeBottomRight, {
+                        width: true,
+                        height: true,
+                        x: false,
+                        y: false,
+                        angle: false
+                    }, {invertX: false, invertY: false}, 'resize');
+                    this.addPanListener(this.$refs.resizeBottom, {
+                        width: false,
+                        height: true,
+                        x: false,
+                        y: false,
+                        angle: false
+                    }, {invertX: false, invertY: false}, 'resize');
+                    this.addPanListener(this.$refs.resizeBottomLeft, {
+                        width: true,
+                        height: true,
+                        x: true,
+                        y: false,
+                        angle: false
+                    }, {invertX: true, invertY: false}, 'resize');
+                    this.addPanListener(this.$refs.resizeLeft, {
+                        width: true,
+                        height: false,
+                        x: true,
+                        y: false,
+                        angle: false
+                    }, {invertX: true, invertY: false}, 'resize');
+                }
                 // add rotate listener
-                this.addPanListener(this.$refs.rotateTopLeft,     {width: false,  height: false,  x: false,   y: false,   angle: true}, {start: this._rotateStart, end: this._rotateEnd}, 'rotate');
-                this.addPanListener(this.$refs.rotateTopRight,    {width: false,  height: false,  x: false,   y: false,   angle: true}, {start: this._rotateStart, end: this._rotateEnd}, 'rotate');
-                this.addPanListener(this.$refs.rotateBottomLeft,  {width: false,  height: false,  x: false,   y: false,   angle: true}, {start: this._rotateStart, end: this._rotateEnd}, 'rotate');
-                this.addPanListener(this.$refs.rotateBottomRight, {width: false,  height: false,  x: false,   y: false,   angle: true}, {start: this._rotateStart, end: this._rotateEnd}, 'rotate');
+                if (this.mOptions.rotate) {
+                    this.addPanListener(this.$refs.rotateTopLeft, {
+                        width: false,
+                        height: false,
+                        x: false,
+                        y: false,
+                        angle: true
+                    }, {}, 'rotate');
+                    this.addPanListener(this.$refs.rotateTopRight, {
+                        width: false,
+                        height: false,
+                        x: false,
+                        y: false,
+                        angle: true
+                    }, {}, 'rotate');
+                    this.addPanListener(this.$refs.rotateBottomLeft, {
+                        width: false,
+                        height: false,
+                        x: false,
+                        y: false,
+                        angle: true
+                    }, {}, 'rotate');
+                    this.addPanListener(this.$refs.rotateBottomRight, {
+                        width: false,
+                        height: false,
+                        x: false,
+                        y: false,
+                        angle: true
+                    }, {}, 'rotate');
+                }
+                // add move listener
+                if (this.mOptions.move) {
+                    this.addPanListener(this.$refs.move, {
+                        width: false,
+                        height: false,
+                        x: true,
+                        y: true,
+                        angle: false
+                    }, {invertX: false, invertY: false}, 'move');
+                }
+                // register hover events
+                this.managers.forEach(manager => {
+                    manager.element.addEventListener('mouseenter', function () { this.hoverStart(manager.name); }.bind(this));
+                    manager.element.addEventListener('mouseleave', function () { this.hoverEnd(manager.name); }.bind(this));
+                });
             }
-            // add move listener
-            this.addPanListener(this.$refs.move, {width: false, height: false, x: true, y: true, angle: false}, {invertX: false, invertY: false}, 'move');            
-            // register hover events
-            this.managers.forEach(manager => {
-                manager.element.addEventListener('mouseenter', function () { this.hoverStart(manager.name); }.bind(this));
-                manager.element.addEventListener('mouseleave', function () { this.hoverEnd(manager.name); }.bind(this));
-            });
+            // mobile listeners
+            else {
+                // register move, resize listeners on move element
+                const recognizers = [];
+                if (this.mOptions.move) recognizers.push([Hammer.Pan, { direction: Hammer.DIRECTION_ALL }]);
+                if (this.mOptions.resize) recognizers.push([Hammer.Pinch]);
+                recognizers.push([Hammer.Press]);
+                const moveResizeManager = new Hammer.Manager(this.$refs.move, { recognizers });
+                // move
+                if (this.mOptions.move) {
+                    moveResizeManager.on('panstart', function () {
+                        this.inProgress = true;
+                        this.action = 'move';
+                    }.bind(this));
+                    moveResizeManager.on('panmove', function (e) {
+                        // calculate actual delta
+                        const deltaX = e.srcEvent.movementX;
+                        const deltaY = e.srcEvent.movementY;
+
+                        // prepare output
+                        const newValue = {
+                            width: this.value.width,
+                            height: this.value.height,
+                            x: this.value.x + deltaX,
+                            y: this.value.y + deltaY,
+                            angle: this.value.angle
+                        };
+                        // emit event
+                        this.$emit('input', newValue);
+                    }.bind(this));
+                    moveResizeManager.on('panend', function () {
+                        this.inProgress = false;
+                        this.action = null;
+                        this.$emit('changed');
+                    }.bind(this));
+                }
+                // resize
+                if (this.mOptions.resize) {
+                    moveResizeManager.on('pinchstart', function (e) {
+                        this.inProgress = true;
+                        this.action = 'resize';
+                        this.prevDeltaX = e.deltaX;
+                        this.prevDeltaY = e.deltaY;
+                    }.bind(this));
+                    moveResizeManager.on('pinch', function (e) {
+                        const newValue = {
+                            width: this.value.width + (e.deltaX - this.prevDeltaX),
+                            height: this.value.height + (e.deltaY - this.prevDeltaY),
+                            x: this.value.x,
+                            y: this.value.y,
+                            angle: this.value.angle
+                        };
+                        this.prevDeltaX = e.deltaX;
+                        this.prevDeltaY = e.deltaY;
+                        // emit event
+                        this.$emit('input', newValue);
+                    }.bind(this));
+                    moveResizeManager.on('pinchend', function () {
+                        this.inProgress = false;
+                        this.action = null;
+                        this.prevDeltaX = 0;
+                        this.prevDeltaY = 0;
+                        this.$emit('changed');
+                    }.bind(this));
+                }
+                // press
+                moveResizeManager.on('press', function (e) {
+                    this.onContextMenu(e.srcEvent);
+                }.bind(this));
+                // add manager to array
+                this.managers.push(moveResizeManager);
+                // register rotate listener
+                if (this.mOptions.rotate) {
+                    this.addPanListener(this.$refs.rotateMobile, {width: false,  height: false,  x: false,   y: false,   angle: true}, {}, 'rotate');
+                }
+            }
         },
         beforeDestroy() {
             // remove listeners
-            this.managers.forEach(m => {this.removePanListener(m)});
+            this.managers.forEach(m => {this.removeListeners(m)});
         },
         methods: {
-            addPanListener(element, changes, settings, name) {
+            addPanListener(element, changes, mOptions, name) {
                 // create hammer manager
                 const manager = new Hammer.Manager(element, {recognizers: [[Hammer.Pan]]});
                 // register event listeners
@@ -141,27 +339,39 @@
                     this.inProgress = true;
                     this.action = name;
                     this.prevAngle = changes.angle ? _getAngle(e.srcEvent, this.$refs.mrr.getBoundingClientRect()) : 0;
-                    if (settings.start && typeof settings.start === 'function') settings.start();
                 }.bind(this));
                 manager.on('panmove', function (e) {
                     // calculate actual delta
                     const deltaX = e.srcEvent.movementX;
                     const deltaY = e.srcEvent.movementY;
                     let deltaAngle = 0;
+                    let newAngle = this.value.angle;
                     // calculate change in angle
                     if (changes.angle) {
                         const angle = _getAngle(e.srcEvent, this.$refs.mrr.getBoundingClientRect());
                         deltaAngle = angle - this.prevAngle;
                         this.prevAngle = angle;
+                        if (e.srcEvent.shiftKey) {
+                            let tmpAngle = Math.round(this.realAngle + deltaAngle);
+                            this.realAngle = tmpAngle;
+                            if (tmpAngle === (Math.round(tmpAngle / 10) * 10)) {
+                                newAngle = tmpAngle;
+                            } else {
+                                newAngle = this.value.angle;
+                            }
+                        } else {
+                            newAngle = Math.round(this.value.angle + deltaAngle);
+                            this.realAngle = newAngle;
+                        }
                     }
                     
                     // prepare output
                     const newValue = {
-                        width: changes.width ? (settings.invertX ? this.value.width - deltaX : this.value.width + deltaX) : this.value.width,
-                        height: changes.height ? (settings.invertY ? this.value.height - deltaY : this.value.height + deltaY) : this.value.height,
+                        width: changes.width ? (mOptions.invertX ? this.value.width - deltaX : this.value.width + deltaX) : this.value.width,
+                        height: changes.height ? (mOptions.invertY ? this.value.height - deltaY : this.value.height + deltaY) : this.value.height,
                         x: changes.x ? this.value.x + deltaX : this.value.x,
                         y: changes.y ? this.value.y + deltaY : this.value.y,
-                        angle: changes.angle ? this.value.angle + deltaAngle : this.value.angle
+                        angle: newAngle
                     };
                     // emit event
                     this.$emit('input', newValue);
@@ -170,14 +380,13 @@
                     this.inProgress = false;
                     this.action = null;
                     this.$emit('changed');
-                    if (settings.end && typeof settings.start === 'function') settings.end();
                 }.bind(this));
                 // push name to manager
                 manager.name = name;
                 // add manager to array
                 this.managers.push(manager);
             },
-            removePanListener(manager) {
+            removeListeners(manager) {
                 for (let handler of manager.handlers) {
                     manager.remove(handler);
                 }
@@ -186,14 +395,14 @@
             hoverStart(name) {
                 if (!this.inProgress && this.action !== name) this.action = name;
             },
-            hoverEnd(name) {
+            hoverEnd() {
                 if (!this.inProgress) this.action = null;
             },
-            rotateStart() {
-                this.rotation = true;
-            },
-            rotateEnd() {
-                this.rotation = false;
+            onContextMenu(e) {
+                if (this.$listeners.contextmenu) {
+                    e.preventDefault();
+                    this.$emit('contextmenu', e);
+                }
             }
         }
     }
@@ -209,6 +418,7 @@
         position: absolute;
         display: block;
         stroke: aqua;
+        touch-action: none;
     }
     .mrr-tool-move {
         cursor: move;
@@ -298,5 +508,12 @@
                 opacity: $opacity-light;
             }
         }
+    }
+    // transition
+    .fade-enter-active, .fade-leave-active {
+        transition: opacity ($duration * 2);
+    }
+    .fade-enter, .fade-leave-to {
+        opacity: 0;
     }
 </style>
