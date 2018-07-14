@@ -1,11 +1,12 @@
 <template>
     <svg ref="SVG" class="clip-tool" :width="width || '100%'" :height="height || '100%'" :viewBox="viewbox" :data-path-hover="pathHover" @click="addPoint">
-        <polygon v-if="points.length > 0" :points="path" ref="polygon" @mouseenter="setPathHover" @mouseleave="setPathNormal"></polygon>
-        <circle v-for="(point, i) of points" :key="i" :index="i" :cx="point[0]" :cy="point[1]" r="2" ></circle>
+        <polygon class="clip-tool-path" v-if="points.length > 0" :points="path" ref="polygon" @mouseenter="setPathHover" @mouseleave="setPathNormal"></polygon>
+        <circle class="clip-tool-point" v-for="(point, i) of points" :key="i" :index="i" :cx="point[0]" :cy="point[1]" r="2"></circle>
     </svg>
 </template>
 
 <script>
+    import Hammerjs from 'hammerjs';
     const getPathLength = (points) => {
         return points.reduce((sum, a, i) => {
             const b = i + 1 === points.length ? points[0] : points[i + 1];
@@ -20,10 +21,32 @@
 
     export default {
         name: "ClipTool",
-        props: ['width', 'height', 'itemId', 'points'],
+        //props: ['width', 'height', 'value'],
+        props: {
+            width: {
+                default: 100
+            },
+            height: {
+                default: 100
+            },
+            value: {
+                default: []
+            }
+        },
         data() {
             return {
-                pathHover: false
+                pathHover: false,
+                points: this.value,
+                managers: []
+            }
+        },
+        watch: {
+            value() {
+                // destroy and register new move listeners when value changes
+                // destroy all existing managers
+                managers.forEach(manager => manager.destroy());
+                // create new manager for each point
+
             }
         },
         computed: {
@@ -46,22 +69,20 @@
                 // check if target is polygon -> add new point between existing points
                 if (this.$refs.polygon && this.$refs.polygon.isPointInStroke(clickPoint)) {
                     // make a copy of array length. It goes to infinitive loop if not
-                    const length = Number(this.points.length);
+                    const length = Number(this.value.length);
                     // try all positions of new point. If we have a right one, the length shouldn't change
                     for (let i = 1; i <= length; i++) {
                         // make a deep copy of array
-                        const newPoints = this.points.slice(0, this.points.length);
+                        const newPoints = this.value.slice(0, this.value.length);
                         // add new point
                         newPoints.splice(i, 0, [clickPoint.x, clickPoint.y]);
                         // calculate new length
                         const newLength = getPathLength(newPoints);
+                        // add point to index = i if lenght didn't change
                         if (Math.ceil(newLength) === Math.ceil(this.length)) {
-                            this.$store.commit('wrap.addClipPoint', {
-                                id: this.itemId,
-                                left: e.layerX,
-                                top: e.layerY,
-                                index: i
-                            });
+                            this.points.splice(i, 0, [e.layerX, e.layerY]);
+                            this.$emit('input', this.points);
+                            this.$emit('change');
                         }
                     }
 
@@ -85,11 +106,9 @@
                             left = lastPoint[0];
                         }
                     }
-                    this.$store.commit('wrap.addClipPoint', {
-                        id: this.itemId,
-                        left,
-                        top
-                    });
+                    this.points.push([left, top]);
+                    this.$emit('input', this.points);
+                    this.$emit('change');
                 }
             },
             setPathHover() {this.pathHover = true; },

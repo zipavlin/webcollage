@@ -12,7 +12,7 @@
         </nav>
         <div id="stage">
             <div :style="style">
-                <mrr-tool v-model="mrr"></mrr-tool>
+                <clip-tool :width="600" :height="400" v-model="ct"></clip-tool>
             </div>
         </div>
         <!--
@@ -33,7 +33,8 @@
 <script>
     import ContextMenu from './ContextMenu.vue';
     import CollageItem from './CollageItem.vue';
-    import MrrTool from './MrrTool.vue';
+    import MrrTool from '@zipavlin/vue-mrr-tool';
+    import ClipTool from './ClipTool.vue';
     import history from './history';
 
     export default {
@@ -41,10 +42,12 @@
         components: {
             ContextMenu,
             CollageItem,
+            ClipTool,
             MrrTool
         },
         data() {
             return {
+                ct: [],
                 mrr: {
                     width: 200,
                     height: 100,
@@ -65,8 +68,7 @@
                     left: this.mrr.x + 'px',
                     width: this.mrr.width + 'px',
                     height: this.mrr.height + 'px',
-                    transform: `rotate(${this.mrr.angle}deg)`,
-                    transformOrigin: 'center center'
+                    transform: `rotate(${this.mrr.angle}deg)`
                 };
             }
         },
