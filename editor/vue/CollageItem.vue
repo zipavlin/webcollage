@@ -1,6 +1,6 @@
 <template>
     <div class="collage-item" :style="style" ref="item" :data-selected="item.selected" @contextmenu="openItemContextMenu">
-        <div class="collage-item-wrap">
+        <div class="collage-item-wrap" :style="wrapStyle">
             <iframe class="collage-item-child" :src="item.url" frameborder="0" ref="child"></iframe>
         </div>
         <mrr-tool v-if="item.state === 'mrr'" v-model="mrr" @changed="saveHistory" :options="{action: false}" @contextmenu="openMrrContextMenu"></mrr-tool>
@@ -28,7 +28,7 @@
         },
         computed: {
             clipPath() {
-                return this.item.clip.map(x => x.join('%, ')).join('% ').trim();
+                return this.item.clip.map(x => x.map(z => z + 'px').join(' ')).join(',').trim();
             },
             style() {
                 return {
@@ -36,8 +36,12 @@
                     height: this.item.height + 'px',
                     top: this.item.y + 'px',
                     left: this.item.x + 'px',
-                    clipPath: this.item.clip.length > 0 ? `polygon(${this.clipPath})` : 'none',
                     transform: `translateZ(${this.$store.state.zoom}px) rotate(${this.item.angle}deg)`,
+                }
+            },
+            wrapStyle() {
+                return {
+                    clipPath: this.item.state !== 'clip' && this.item.clip.length > 2 ? `polygon(${this.clipPath})` : 'none',
                 }
             },
             clip: {
@@ -45,8 +49,10 @@
                     return this.$store.state.items[this.index].clip;
                 },
                 set (value) {
-                    value.index = this.index;
-                    this.$store.commit('item.clip', value);
+                    this.$store.commit('item.clip', {
+                        clip: value,
+                        index: this.index
+                    });
                 }
             },
             mrr: {
@@ -75,7 +81,7 @@
             },
             openContextMenu(type, e) {
                 e.preventDefault();
-                if (this.item.state === null) {
+                if (this.item.state === type || type === 'item' && this.item.state === null) {
                     this.$store.commit('contextMenu.open', {
                         id: this.index,
                         type: type,

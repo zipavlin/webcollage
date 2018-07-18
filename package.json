@@ -15,8 +15,8 @@
   "author": "Žiga Pavlin",
   "license": "ISC",
   "dependencies": {
-    "@zipavlin/vue-clip-tool": "^1.0.0",
-    "@zipavlin/vue-mrr-tool": "^1.0.2",
+    "@zipavlin/vue-clip-tool": "^1.0.1",
+    "@zipavlin/vue-mrr-tool": "^1.0.3",
     "hammerjs": "^2.0.8",
     "interactjs": "^1.3.4",
     "is-mobile": "^1.0.0",

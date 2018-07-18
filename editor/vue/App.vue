@@ -18,13 +18,14 @@
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openClip')">edit mask</button>
         </context-menu>
         <context-menu v-else-if="contextMenu.type === 'mrr'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.done')">done editing</button>            
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setPosition')">set position</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setSize')">set size</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setRotation')">set rotation</button>
-            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.done')">done editing</button>
         </context-menu>
         <context-menu v-else-if="contextMenu.type === 'clip'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
-            <button class="blank context-menu-btn" @click="">clip</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.clip.done')">done editing</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.clip.clear')">clear mask</button>
         </context-menu>
     </div>
 </template>

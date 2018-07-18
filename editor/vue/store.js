@@ -7,7 +7,7 @@ Vue.use(Vuex);
 export default new Vuex.Store({
     state: {
         items: [
-            {angle:0, clip:[], height:64, selected:false, state:null, url:"http://interactjs.io/docs", width:334, x:714, y:267}
+            {angle:0, clip:[], height:64, selected:false, state:null, url:"http://interactjs.io/docs", width:334, x:391, y:108}
         ],
         zoom: 0,
         contextMenu: {
@@ -26,7 +26,6 @@ export default new Vuex.Store({
             }
         },
         'item.clip': function (state, payload) {
-            console.log(payload);
             state.items[payload.index].clip = payload.clip;
         },
         'item.setInitialState': function (state, id) {
@@ -111,6 +110,15 @@ export default new Vuex.Store({
         'contextMenu.mrr.done': function (state) {
             const id = state.contextMenu.id;
             state.items[id].state = null;
+        },
+
+        'contextMenu.clip.done': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].state = null;
+        },
+        'contextMenu.clip.clear': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].clip = [];
         },
 
         'contextMenu.item.openMrr': function (state) {
