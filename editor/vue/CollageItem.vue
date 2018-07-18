@@ -1,107 +1,97 @@
 <template>
-    <div class="collage-item" :style="style" ref="wrap" :data-selected="item.selected" @contextmenu="openContextMenu">
-        <iframe class="collage-item-child" :src="item.url" frameborder="0" ref="child"></iframe>
-        <clip-tool v-if="item.cliptool" :item-id="index" :width="item.width" :height="item.height" :points="item.points || []"></clip-tool>
+    <div class="collage-item" :style="style" ref="item" :data-selected="item.selected" @contextmenu="openItemContextMenu">
+        <div class="collage-item-wrap">
+            <iframe class="collage-item-child" :src="item.url" frameborder="0" ref="child"></iframe>
+        </div>
+        <mrr-tool v-if="item.state === 'mrr'" v-model="mrr" @changed="saveHistory" :options="{action: false}" @contextmenu="openMrrContextMenu"></mrr-tool>
+        <clip-tool v-else-if="item.state === 'clip'" v-model="clip" :width="item.width" :height="item.height" @changed="saveHistory" @contextmenu="openClipContextMenu"></clip-tool>
     </div>
 </template>
 
 <script>
-    import ClipTool from './ClipTool.vue';
-    import interact from 'interactjs';
+    import MrrTool from '@zipavlin/vue-mrr-tool';
+    import ClipTool from '@zipavlin/vue-clip-tool';
+    import history from './history';
 
     export default {
         name: "CollageItem",
         components: {
-            ClipTool
+            ClipTool,
+            MrrTool
         },
         props: ['item', 'index'],
         data() {
             return {
                 editWrap: false,
                 editChild: false,
-                showClipTool: false,
-                interacts: []
             }
         },
         computed: {
+            clipPath() {
+                return this.item.clip.map(x => x.join('%, ')).join('% ').trim();
+            },
             style() {
                 return {
                     width: this.item.width + 'px',
                     height: this.item.height + 'px',
-                    top: this.item.top + 'px',
-                    left: this.item.left + 'px',
-                    clipPath: this.item.clip ? `polygon(${this.item.clip})` : 'none',
-                    transform: `translateZ(${this.$store.state.zoom}px) rotate(${this.item.rotate ? this.item.rotate : 0}deg)`,
+                    top: this.item.y + 'px',
+                    left: this.item.x + 'px',
+                    clipPath: this.item.clip.length > 0 ? `polygon(${this.clipPath})` : 'none',
+                    transform: `translateZ(${this.$store.state.zoom}px) rotate(${this.item.angle}deg)`,
                 }
-            }
-        },
-        watch: {
-            item() {
-                if (this.item.cliptool && this.interacts.length > 0) {
-                    this.unsetInteracts();
-                } else if (!this.item.cliptool && this.interacts.length < 0) {
-                    this.setInteracts();
+            },
+            clip: {
+                get () {
+                    return this.$store.state.items[this.index].clip;
+                },
+                set (value) {
+                    value.index = this.index;
+                    this.$store.commit('item.clip', value);
+                }
+            },
+            mrr: {
+                get () {
+                    return {
+                        width: this.$store.state.items[this.index].width,
+                        height: this.$store.state.items[this.index].height,
+                        x: this.$store.state.items[this.index].x,
+                        y: this.$store.state.items[this.index].y,
+                        angle: this.$store.state.items[this.index].angle,
+                    };
+                },
+                set (value) {
+                    value.index = this.index;
+                    this.$store.commit('item.mrr', value);
                 }
             }
         },
         created() {
             // init empty values
-            this.$store.commit('wrap.setInitialState', this.index);
-        },
-        mounted() {
-            // set interacts
-            this.setInteracts();
-        },
-        beforeDestroy() {
-            this.unsetInteracts();
+            this.$store.commit('item.setInitialState', this.index);
         },
         methods: {
-            openContextMenu(e) {
+            saveHistory() {
+                history.saveSnapshot();
+            },
+            openContextMenu(type, e) {
                 e.preventDefault();
-                this.$store.commit('itemContextMenu.open', {
-                    id: this.index,
-                    left: e.clientX,
-                    top: e.clientY
-                });
+                if (this.item.state === null) {
+                    this.$store.commit('contextMenu.open', {
+                        id: this.index,
+                        type: type,
+                        left: e.clientX,
+                        top: e.clientY
+                    });
+                }
             },
-            setInteracts() {
-                const wrap_moveresize = interact(this.$refs.wrap)
-                    .draggable({})
-                    .resizable({
-                        edges: { left: true, right: true, bottom: true, top: true },
-                        restrictSize: {
-                            min: { width: 50, height: 50 },
-                        },
-                        inertia: true,
-                    })
-                    .on('dragstart resizestart', function () {
-                        this.$store.commit('wrap.select', this.index);
-                    }.bind(this))
-                    .on('dragend resizeend', function () {
-                        this.$store.commit('wrap.unselect', this.index);
-                    }.bind(this))
-                    .on('dragmove', function (event) {
-                        this.$store.commit('wrap.moveresize', {
-                            id: this.index,
-                            left: event.dx,
-                            top: event.dy
-                        });
-                    }.bind(this))
-                    .on('resizemove', function (event) {
-                        this.$store.commit('wrap.moveresize', {
-                            id: this.index,
-                            width: event.rect.width,
-                            height: event.rect.height,
-                            left: event.deltaRect.left,
-                            top: event.deltaRect.top
-                        });
-                    }.bind(this));
-                this.interacts.push(wrap_moveresize);
+            openMrrContextMenu(e) {
+                this.openContextMenu('mrr', e);
             },
-            unsetInteracts() {
-                this.interacts.forEach(int => int.unset());
-                // empty array
-                this.interacts = [];
+            openClipContextMenu(e) {
+                this.openContextMenu('clip', e);
+            },
+            openItemContextMenu(e) {
+                this.openContextMenu('item', e);
             }
         }
     }
@@ -111,13 +101,8 @@
     .collage-item {
         position: absolute;
         display: block;
-        overflow: hidden;
-        border: 1px dotted transparent;
-        &:hover, &[data-selected="true"] {
-            border-color: #b8b7b7;
-            .collage-item-nav {
-                opacity: 1;
-            }
+        &-wrap {
+            overflow: hidden;
         }
         &-child {
             position: absolute;
@@ -125,39 +110,6 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-        }
-        &-nav {
-            position: absolute;
-            display: flex;
-            top: 50%;
-            left: 50%;
-            transform: translate3d(-50%, -50%, 0);
-            opacity: 0;
-            transition: opacity .35s;
-            z-index: 2;
-            &-btn {
-                $size: 36px;
-                position: relative;
-                width: $size;
-                height: $size;
-                background-color: #fff;
-                border: 2px solid #0d121d;
-                border-radius: 50%;
-                outline: none;
-                flex: none;
-                margin: 0 3px;
-                cursor: pointer;
-                svg {
-                    $size: 18px;
-                    position: absolute;
-                    display: block;
-                    width: $size;
-                    height: $size;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                }
-            }
         }
     }
 </style>

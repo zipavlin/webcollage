@@ -7,26 +7,36 @@ Vue.use(Vuex);
 export default new Vuex.Store({
     state: {
         items: [
-            {url: 'http://interactjs.io/docs'}
+            {angle:0, clip:[], height:64, selected:false, state:null, url:"http://interactjs.io/docs", width:334, x:714, y:267}
         ],
         zoom: 0,
-        itemContextMenu: {
+        contextMenu: {
             id: null,
+            type: null,
             top: 0,
-            left: 0,
-            open: false
+            left: 0
         }
     },
     mutations: {
-        // item wrap handlers
-        'wrap.setInitialState': function (state, id) {
+        'item.mrr': function (state, payload) {
+            for (let key in payload) {
+                if (key === 'index') continue;
+                if (state.items[payload.index][key] === payload[key]) continue;
+                state.items[payload.index][key] = payload[key];
+            }
+        },
+        'item.clip': function (state, payload) {
+            console.log(payload);
+            state.items[payload.index].clip = payload.clip;
+        },
+        'item.setInitialState': function (state, id) {
             const initialSettings = {
                 width: window.innerWidth,
                 height: window.innerHeight,
-                left: 0,
-                top: 0,
-                points: [],
-                clip: '',
+                x: 0,
+                y: 0,
+                clip: [],
+                angle: 0,
                 selected: false
             };
 
@@ -34,34 +44,12 @@ export default new Vuex.Store({
                 if (!state.items[id][key]) Vue.set(state.items[id], key, initialSettings[key]);
             }
         },
-        'wrap.moveresize': function (state, payload) {
-            for (let key in payload) {
-                if (payload.hasOwnProperty(key) && key !== 'id') {
-                    switch(key) {
-                        case 'left': case 'top': case 'rotate':
-                        let newValue = (state.items[payload.id][key] || 0) + payload[key];
-                        Vue.set(state.items[payload.id], key, newValue);
-                        break;
-                        default:
-                            Vue.set(state.items[payload.id], key, payload[key]);
-                            break;
-                    }
-                }
-            }
-        },
+
         'wrap.select': function (state, id) {
             Vue.set(state.items[id], 'selected', true);
         },
         'wrap.unselect': function (state, id) {
             Vue.set(state.items[id], 'selected', false);
-        },
-        'wrap.addClipPoint': function (state, payload) {
-            if (payload.index) {
-                state.items[payload.id].points.splice(payload.index, 0, [payload.left, payload.top]);
-            } else {
-                state.items[payload.id].points.push([payload.left, payload.top]);
-            }
-            history.saveSnapshot();
         },
 
         // collage item child handlers
@@ -76,52 +64,65 @@ export default new Vuex.Store({
         },
 
         // context menu
-        'itemContextMenu.open': function (state, payload) {
-            payload.open = true;
-            state.itemContextMenu = payload;
-        },
-        'itemContextMenu.close': function (state) {
-            state.itemContextMenu = {
+        'contextMenu.close': function (state) {
+            state.contextMenu = {
                 id: null,
+                type: null,
                 top: 0,
-                left: 0,
-                open: false
+                left: 0
             }
         },
-        'itemContextMenu.openClipTool': function (state) {
-            const id = state.itemContextMenu.id;
-            Vue.set(state.items[id], 'cliptool', true);
+        'contextMenu.open': function (state, payload) {
+            payload.open = true;
+            state.contextMenu = payload;
         },
-        'itemContextMenu.setRotation': function (state) {
-            const id = state.itemContextMenu.id;
-            const rotation = prompt("Please enter rotation:", state.items[id].rotate || 0);
-            if (!(rotation == null || rotation === "" || isNaN(rotation))) {
-                Vue.set(state.items[id], 'rotate', rotation);
+
+        'contextMenu.mrr.setPosition': function (state) {
+            const id = state.contextMenu.id;
+            let size = prompt("Please enter position (left, top):", `${state.items[id].x || 0}, ${state.items[id].y || 0}`);
+            if (!(size == null || size === "")) {
+                // parse
+                size = size.match(/^(\d+)(?:px)?\s*[x,*]\s*(\d+)?(?:px)?\s*$/i);
+                // set width
+                if (size[1] && !isNaN(size[1])) state.items[id].x = parseInt(size[1]);
+                // set height
+                if (size[2] && !isNaN(size[2])) state.items[id].y = parseInt(size[2]);
             }
         },
-        'itemContextMenu.setSize': function (state) {
-            const id = state.itemContextMenu.id;
+        'contextMenu.mrr.setSize': function (state) {
+            const id = state.contextMenu.id;
             let size = prompt("Please enter size (width x height):", `${state.items[id].width || 0} x ${state.items[id].height || 0}`);
             if (!(size == null || size === "")) {
                 // parse
                 size = size.match(/^(\d+)(?:px)?\s*[x,*]\s*(\d+)?(?:px)?\s*$/i);
                 // set width
-                if (size[1] && !isNaN(size[1])) Vue.set(state.items[id], 'width', parseInt(size[1]));
+                if (size[1] && !isNaN(size[1])) state.items[id].width = parseInt(size[1]);
                 // set height
-                if (size[2] && !isNaN(size[2])) Vue.set(state.items[id], 'height', parseInt(size[2]));
+                if (size[2] && !isNaN(size[2])) state.items[id].height = parseInt(size[2]);
             }
         },
-        'itemContextMenu.setPosition': function (state) {
-            const id = state.itemContextMenu.id;
-            let size = prompt("Please enter position (left, top):", `${state.items[id].left || 0}, ${state.items[id].top || 0}`);
-            if (!(size == null || size === "")) {
-                // parse
-                size = size.match(/^(\d+)(?:px)?\s*[x,*]\s*(\d+)?(?:px)?\s*$/i);
-                // set width
-                if (size[1] && !isNaN(size[1])) Vue.set(state.items[id], 'left', parseInt(size[1]));
-                // set height
-                if (size[2] && !isNaN(size[2])) Vue.set(state.items[id], 'top', parseInt(size[2]));
+        'contextMenu.mrr.setRotation': function (state) {
+            const id = state.contextMenu.id;
+            const rotation = prompt("Please enter rotation:", state.items[id].angle || 0);
+            if (!(rotation == null || rotation === "" || isNaN(rotation))) {
+                state.items[id].angle = rotation;
             }
-        }
+        },
+        'contextMenu.mrr.done': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].state = null;
+        },
+
+        'contextMenu.item.openMrr': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].state = 'mrr';
+        },
+        'contextMenu.item.openClip': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].state = 'clip';
+        },
+
+
+
     }
 });

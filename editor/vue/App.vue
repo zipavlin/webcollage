@@ -11,21 +11,20 @@
             </div>
         </nav>
         <div id="stage">
-            <div :style="style">
-                <clip-tool :width="600" :height="400" v-model="ct"></clip-tool>
-            </div>
-        </div>
-        <!--
-        <div id="stage">
             <collage-item v-for="(item ,i) of items" :key="i" :index="i" :item="item"></collage-item>
         </div>
-        -->
-        <context-menu v-if="itemContextMenu.open" :left="itemContextMenu.left" :top="itemContextMenu.top" @close="$store.commit('itemContextMenu.close')">
-            <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.openClipTool')">open clip tool</button>
-            <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.setRotation')">set rotation</button>
-            <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.setSize')">set size</button>
-            <button class="blank context-menu-btn" @click="$store.commit('itemContextMenu.setPosition')">set position</button>
-            <button class="blank context-menu-btn" @click="">edit child object</button>
+        <context-menu v-if="contextMenu.type === 'item'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openMrr')">edit size & position</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openClip')">edit mask</button>
+        </context-menu>
+        <context-menu v-else-if="contextMenu.type === 'mrr'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setPosition')">set position</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setSize')">set size</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setRotation')">set rotation</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.done')">done editing</button>
+        </context-menu>
+        <context-menu v-else-if="contextMenu.type === 'clip'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
+            <button class="blank context-menu-btn" @click="">clip</button>
         </context-menu>
     </div>
 </template>
@@ -33,44 +32,17 @@
 <script>
     import ContextMenu from './ContextMenu.vue';
     import CollageItem from './CollageItem.vue';
-    import MrrTool from '@zipavlin/vue-mrr-tool';
-    import ClipTool from './ClipTool.vue';
-    import history from './history';
 
     export default {
         name: "App",
         components: {
             ContextMenu,
-            CollageItem,
-            ClipTool,
-            MrrTool
-        },
-        data() {
-            return {
-                ct: [[10, 10], [93, 204], [234, 20]],
-                mrr: {
-                    width: 200,
-                    height: 100,
-                    x: 0,
-                    y: 0,
-                    angle: 0
-                }
-            }
+            CollageItem
         },
         computed: {
             items() { return this.$store.state.items; },
             zoom() { return this.$store.state.zoom },
-            itemContextMenu() { return this.$store.state.itemContextMenu; },
-            style() {
-                return {
-                    position: 'absolute',
-                    top: this.mrr.y + 'px',
-                    left: this.mrr.x + 'px',
-                    width: this.mrr.width + 'px',
-                    height: this.mrr.height + 'px',
-                    transform: `rotate(${this.mrr.angle}deg)`
-                };
-            }
+            contextMenu() { return this.$store.state.contextMenu; }
         },
         mounted() {
             // add history key listeners
@@ -84,11 +56,6 @@
                     history.redo();
                 }
             }.bind(this));
-        },
-        methods: {
-            onContextMenu(e) {
-                console.log(e);
-            }
         }
     }
 </script>
