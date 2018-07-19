@@ -6,9 +6,7 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
     state: {
-        items: [
-            {angle:0, clip:[], height:64, selected:false, state:null, url:"http://interactjs.io/docs", width:334, x:391, y:108}
-        ],
+        items: [],
         zoom: 0,
         contextMenu: {
             id: null,
@@ -18,6 +16,22 @@ export default new Vuex.Store({
         }
     },
     mutations: {
+        'item.setInitialState': function (state, id) {
+            const initialSettings = {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                x: 0,
+                y: 0,
+                clip: [],
+                angle: 0,
+                state: null
+                //selected: false,
+            };
+
+            for (let key in initialSettings) {
+                if (!state.items[id][key]) Vue.set(state.items[id], key, initialSettings[key]);
+            }
+        },
         'item.mrr': function (state, payload) {
             for (let key in payload) {
                 if (key === 'index') continue;
@@ -28,37 +42,31 @@ export default new Vuex.Store({
         'item.clip': function (state, payload) {
             state.items[payload.index].clip = payload.clip;
         },
-        'item.setInitialState': function (state, id) {
-            const initialSettings = {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                x: 0,
-                y: 0,
-                clip: [],
-                angle: 0,
-                selected: false
-            };
-
-            for (let key in initialSettings) {
-                if (!state.items[id][key]) Vue.set(state.items[id], key, initialSettings[key]);
-            }
-        },
-
-        'wrap.select': function (state, id) {
-            Vue.set(state.items[id], 'selected', true);
-        },
-        'wrap.unselect': function (state, id) {
-            Vue.set(state.items[id], 'selected', false);
-        },
-
-        // collage item child handlers
-
 
         // stage handlers
         'stage.zoomIn': function (state, action) {
             state.zoom += 100;
         },
         'stage.zoomOut': function (state, action) {
+            state.zoom -= 100;
+        },
+        'stage.addNew': function (state) {
+            const url = prompt("Write whole url in field below");
+            if (url) {
+                // check if url can be loaded
+                // add url to stage.items
+                state.items.push({url});
+            }
+        },
+        'stage.clear': function (state) {
+            if (confirm("Are you sure you want to clear collage. This will also remove it from your local storage")) {
+                state.items = [];
+            }
+        },
+        'stage.export': function (state) {
+            state.zoom -= 100;
+        },
+        'stage.import': function (state) {
             state.zoom -= 100;
         },
 
@@ -129,7 +137,22 @@ export default new Vuex.Store({
             const id = state.contextMenu.id;
             state.items[id].state = 'clip';
         },
-
+        'contextMenu.item.orderUp': function (state) {
+            const id = state.contextMenu.id;
+            const item = state.items.slice(id)[0];
+            // remove item
+            state.items.splice(id, 1);
+            // add item back
+            state.items.splice(id === state.items.length ? id : id + 1, 0, item);
+        },
+        'contextMenu.item.orderDown': function (state) {
+            const id = state.contextMenu.id;
+            const item = state.items.slice(id)[0];
+            // remove item
+            state.items.splice(id, 1);
+            // add item back
+            state.items.splice(id === 0 ? id : id - 1, 0, item);
+        },
 
 
     }

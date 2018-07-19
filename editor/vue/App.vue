@@ -8,6 +8,10 @@
                 <button id="zoom-in" @click="$store.commit('stage.zoomIn')" title="zoom in">+</button>
                 <hr>
                 <button id="add-new" @click="$store.commit('stage.addNew')" title="add new component to collage">add new component</button>
+                <hr>
+                <button id="clear" @click="$store.commit('stage.clear')" title="clear collage">clear</button>
+                <button id="export" @click="$store.commit('stage.export')" title="export collage">export</button>
+                <button id="import" @click="$store.commit('stage.import')" title="import collage">import</button>
             </div>
         </nav>
         <div id="stage">
@@ -16,6 +20,8 @@
         <context-menu v-if="contextMenu.type === 'item'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openMrr')">edit size & position</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openClip')">edit mask</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.orderUp')">order up</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.orderDown')">order down</button>
         </context-menu>
         <context-menu v-else-if="contextMenu.type === 'mrr'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.done')">done editing</button>            
@@ -57,6 +63,7 @@
                     history.redo();
                 }
             }.bind(this));
+            // read local storage and populate items
         }
     }
 </script>

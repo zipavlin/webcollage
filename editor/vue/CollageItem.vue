@@ -1,5 +1,5 @@
 <template>
-    <div class="collage-item" :style="style" ref="item" :data-selected="item.selected" @contextmenu="openItemContextMenu">
+    <div class="collage-item" :style="style" ref="item" :data-can-edit="!item.state" @contextmenu="openItemContextMenu">
         <div class="collage-item-wrap" :style="wrapStyle">
             <iframe class="collage-item-child" :src="item.url" frameborder="0" ref="child"></iframe>
         </div>
@@ -78,6 +78,7 @@
         methods: {
             saveHistory() {
                 history.saveSnapshot();
+                // save state.items to local storage
             },
             openContextMenu(type, e) {
                 e.preventDefault();
@@ -107,6 +108,11 @@
     .collage-item {
         position: absolute;
         display: block;
+        border: 2px solid transparent;
+        transition: border-color .25s;
+        &[data-can-edit="true"]:hover {
+            border-color: deeppink;
+        }
         &-wrap {
             overflow: hidden;
         }
