@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
+import fileSaver from 'file-saver';
 import history from './history';
 
 Vue.use(Vuex);
@@ -24,7 +25,11 @@ export default new Vuex.Store({
                 y: 0,
                 clip: [],
                 angle: 0,
-                state: null
+                state: null,
+                childWidth: window.innerWidth,
+                childHeight: window.innerHeight,
+                childX: 0,
+                childY: 0
                 //selected: false,
             };
 
@@ -33,6 +38,11 @@ export default new Vuex.Store({
             }
         },
         'item.mrr': function (state, payload) {
+            // change child size if this mutation is changing size
+            if (state.items[payload.index].width !== payload.width && state.items[payload.index].width === state.items[payload.index].childWidth) state.items[payload.index].childWidth = payload.width;
+            if (state.items[payload.index].height !== payload.height && state.items[payload.index].height === state.items[payload.index].childHeight) state.items[payload.index].childHeight = payload.height;
+
+            // change other values
             for (let key in payload) {
                 if (key === 'index') continue;
                 if (state.items[payload.index][key] === payload[key]) continue;
@@ -53,9 +63,27 @@ export default new Vuex.Store({
         'stage.addNew': function (state) {
             const url = prompt("Write whole url in field below");
             if (url) {
-                // check if url can be loaded
-                // add url to stage.items
-                state.items.push({url});
+                const client = new XMLHttpRequest();
+
+                client.onreadystatechange = function() {
+                    console.log(this.readyState, this.HEADERS_RECEIVED);
+                    if (this.readyState === this.HEADERS_RECEIVED) {
+                        const headers = {
+                            xFrameOptions: client.getResponseHeader("X-Frame-Options"),
+                            AlloOrigin: client.getResponseHeader("Access-Control-Allow-Origin")
+                        };
+                        const xFrameOptionsHeader = client.getResponseHeader("X-Frame-Options");
+                        console.log(headers);
+                        if (xFrameOptionsHeader === 'sameorigin') {
+                            client.abort();
+                        } else {
+                            state.items.push({url});
+                        }
+                    }
+                };
+
+                client.open("GET", url, true);
+                client.send();
             }
         },
         'stage.clear': function (state) {
@@ -64,10 +92,27 @@ export default new Vuex.Store({
             }
         },
         'stage.export': function (state) {
-            state.zoom -= 100;
+            if (state.items.length === 0) {
+                alert("Your canvas is empty!");
+            } else {
+                const blob = new Blob([JSON.stringify(state.items)], {type: "application/json;charset=utf-8"});
+                fileSaver.saveAs(blob, "web-collage.json");
+            }
         },
-        'stage.import': function (state) {
-            state.zoom -= 100;
+        'stage.import': function (state, items) {
+            state.items = items;
+            localStorage.setItem('items', JSON.stringify(state.items));
+        },
+        'stage.local.save': function (state) {
+            localStorage.setItem('items', JSON.stringify(state.items));
+        },
+        'stage.local.load': function (state) {
+            const items = localStorage.getItem('items');
+            if (!items) return;
+            state.items = JSON.parse(items).map(item => {
+                item.state = null;
+                return item;
+            });
         },
 
         // context menu
@@ -119,6 +164,48 @@ export default new Vuex.Store({
             const id = state.contextMenu.id;
             state.items[id].state = null;
         },
+        'contextMenu.mrr.fitToIntersection': function (state) {
+            const id = state.contextMenu.id;
+            const newWidth = Number(state.items[id].width - state.items[id].childX);
+            const newHeight = Number(state.items[id].width - state.items[id].childX);
+            const newX = Number(state.items[id].childX);
+            const newY = Number(state.items[id].childY);
+            state.items[id].width = newWidth;
+            state.items[id].height = newHeight;
+            state.items[id].x = state.items[id].x + (newX > 0 ? newX : 0);
+            state.items[id].y = state.items[id].y + (newY > 0 ? newY : 0);
+            state.items[id].childX = 0;
+            state.items[id].childY = 0;
+        },
+        'contextMenu.mrr.fitToMask': function (state) {
+            const id = state.contextMenu.id;
+            if (state.items[id].clip.length <= 0) return;
+            // get highest x, y & lowest x, y
+            let top = state.items[id].height, right = 0, bottom = 0, left = state.items[id].width;
+            state.items[id].clip.forEach(item => {
+                // top
+                if (item[1] < top) top = item[1];
+                // right
+                if (item[0] > right) right = item[0];
+                // bottom
+                if (item[1] > bottom) bottom = item[1];
+                // left
+                if (item[0] < left) left = item[0];
+            });
+            const padding = 10;
+            top -= padding;
+            right += padding;
+            left -= padding;
+            bottom += padding;
+
+            // set new variables
+            state.items[id].width = right - left;
+            state.items[id].height = bottom - top;
+            state.items[id].x = state.items[id].x + left;
+            state.items[id].y = state.items[id].y + top;
+            state.items[id].childX = state.items[id].childX - left;
+            state.items[id].childY = state.items[id].childY - top;
+        },
 
         'contextMenu.clip.done': function (state) {
             const id = state.contextMenu.id;
@@ -129,6 +216,42 @@ export default new Vuex.Store({
             state.items[id].clip = [];
         },
 
+        'contextMenu.child.setPosition': function (state) {
+            const id = state.contextMenu.id;
+            let size = prompt("Please enter position (left, top):", `${state.items[id].childX || 0}, ${state.items[id].childY || 0}`);
+            if (!(size == null || size === "")) {
+                // parse
+                size = size.match(/^(-?\d+)(?:px)?\s*[x,*]\s*(-?\d+)?(?:px)?\s*$/i);
+                // set width
+                if (size[1] && !isNaN(size[1])) state.items[id].childX = parseInt(size[1]);
+                // set height
+                if (size[2] && !isNaN(size[2])) state.items[id].childY = parseInt(size[2]);
+            }
+        },
+        'contextMenu.child.setSize': function (state) {
+            const id = state.contextMenu.id;
+            let size = prompt("Please enter size (width x height):", `${state.items[id].childWidth || 0} x ${state.items[id].childHeight || 0}`);
+            if (!(size == null || size === "")) {
+                // parse
+                size = size.match(/^(-?\d+)(?:px)?\s*[x,*]\s*(-?\d+)?(?:px)?\s*$/i);
+                // set width
+                if (size[1] && !isNaN(size[1])) state.items[id].childWidth = parseInt(size[1]);
+                // set height
+                if (size[2] && !isNaN(size[2])) state.items[id].childHeight = parseInt(size[2]);
+            }
+        },
+        'contextMenu.child.done': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].state = null;
+        },
+        'contextMenu.child.fitToFrame': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].childWidth = state.items[id].width;
+            state.items[id].childHeight = state.items[id].height;
+            state.items[id].childX = 0;
+            state.items[id].childY = 0;
+        },
+
         'contextMenu.item.openMrr': function (state) {
             const id = state.contextMenu.id;
             state.items[id].state = 'mrr';
@@ -136,6 +259,10 @@ export default new Vuex.Store({
         'contextMenu.item.openClip': function (state) {
             const id = state.contextMenu.id;
             state.items[id].state = 'clip';
+        },
+        'contextMenu.item.openChild': function (state) {
+            const id = state.contextMenu.id;
+            state.items[id].state = 'child';
         },
         'contextMenu.item.orderUp': function (state) {
             const id = state.contextMenu.id;
@@ -153,7 +280,10 @@ export default new Vuex.Store({
             // add item back
             state.items.splice(id === 0 ? id : id - 1, 0, item);
         },
-
-
+        'contextMenu.item.remove': function (state) {
+            const id = state.contextMenu.id;
+            // remove item
+            state.items.splice(id, 1);
+        },
     }
 });

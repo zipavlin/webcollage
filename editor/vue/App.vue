@@ -11,7 +11,8 @@
                 <hr>
                 <button id="clear" @click="$store.commit('stage.clear')" title="clear collage">clear</button>
                 <button id="export" @click="$store.commit('stage.export')" title="export collage">export</button>
-                <button id="import" @click="$store.commit('stage.import')" title="import collage">import</button>
+                <button id="import" @click="$refs.fileInput.click()" title="import collage">import</button>
+                <input type="file" ref="fileInput" accept="application/json" @change="importFile" style="display: none;" hidden>
             </div>
         </nav>
         <div id="stage">
@@ -20,18 +21,28 @@
         <context-menu v-if="contextMenu.type === 'item'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openMrr')">edit size & position</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openClip')">edit mask</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.openChild')">edit child</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.orderUp')">order up</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.orderDown')">order down</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.item.remove')">remove</button>
         </context-menu>
         <context-menu v-else-if="contextMenu.type === 'mrr'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
-            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.done')">done editing</button>            
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.done')">done editing</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setPosition')">set position</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setSize')">set size</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.setRotation')">set rotation</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.fitToIntersection')">fit to intersection</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.mrr.fitToMask')">fit to mask</button>
         </context-menu>
         <context-menu v-else-if="contextMenu.type === 'clip'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.clip.done')">done editing</button>
             <button class="blank context-menu-btn" @click="$store.commit('contextMenu.clip.clear')">clear mask</button>
+        </context-menu>
+        <context-menu v-else-if="contextMenu.type === 'child'" :left="contextMenu.left" :top="contextMenu.top" @close="$store.commit('contextMenu.close')">
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.child.done')">done editing</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.child.setPosition')">set position</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.child.setSize')">set size</button>
+            <button class="blank context-menu-btn" @click="$store.commit('contextMenu.child.fitToFrame')">fit to frame</button>
         </context-menu>
     </div>
 </template>
@@ -63,7 +74,33 @@
                     history.redo();
                 }
             }.bind(this));
-            // read local storage and populate items
+            this.$store.commit('stage.local.load');
+        },
+        methods: {
+            importFile(e) {
+                const file = this.$refs.fileInput.files[0];
+                if (!file || file.type !== 'application/json') {
+                    alert("File doesn't exist or is not json type.");
+                    return;
+                }
+
+                if (confirm(`are you sure you want to import file '${file.name}'? This will overwrite your locally saved collage.`)) {
+                    // read file
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const result = JSON.parse(e.target.result);
+                            if (!result) return new Error();
+                            // save values
+                            this.$store.commit('stage.import', result);
+                        } catch (err) {
+                            console.error(err);
+                            alert("File count not be imported");
+                        }
+                    }.bind(this);
+                    reader.readAsText(file, 'utf-8');
+                }
+            }
         }
     }
 </script>

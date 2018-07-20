@@ -11,8 +11,8 @@
         computed: {
             style() {
                 return {
-                    left: this.left + 'px',
-                    top: this.top + 'px'
+                    left: this.left + window.scrollX + 'px',
+                    top: this.top + window.scrollY + 'px'
                 }
             }
         },
