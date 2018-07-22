@@ -2,6 +2,8 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import fileSaver from 'file-saver';
 import history from './history';
+import { resolve } from 'url';
+import { clearTimeout } from 'timers';
 
 Vue.use(Vuex);
 
@@ -60,31 +62,8 @@ export default new Vuex.Store({
         'stage.zoomOut': function (state, action) {
             state.zoom -= 100;
         },
-        'stage.addNew': function (state) {
-            const url = prompt("Write whole url in field below");
-            if (url) {
-                const client = new XMLHttpRequest();
-
-                client.onreadystatechange = function() {
-                    console.log(this.readyState, this.HEADERS_RECEIVED);
-                    if (this.readyState === this.HEADERS_RECEIVED) {
-                        const headers = {
-                            xFrameOptions: client.getResponseHeader("X-Frame-Options"),
-                            AlloOrigin: client.getResponseHeader("Access-Control-Allow-Origin")
-                        };
-                        const xFrameOptionsHeader = client.getResponseHeader("X-Frame-Options");
-                        console.log(headers);
-                        if (xFrameOptionsHeader === 'sameorigin') {
-                            client.abort();
-                        } else {
-                            state.items.push({url});
-                        }
-                    }
-                };
-
-                client.open("GET", url, true);
-                client.send();
-            }
+        'stage.addNew': function (state, url) {
+            state.items.push({url});
         },
         'stage.clear': function (state) {
             if (confirm("Are you sure you want to clear collage. This will also remove it from your local storage")) {
@@ -285,5 +264,34 @@ export default new Vuex.Store({
             // remove item
             state.items.splice(id, 1);
         },
+    },
+    actions: {
+        addNew({ commit }) {
+            const url = prompt("Write url in field below");
+            if (url) {
+                commit('stage.addNew', url); 
+                /*
+                // check head
+                const http = new XMLHttpRequest();
+                let hasError = false;
+                http.open('HEAD', url);
+                http.onabort = function() {
+                    console.log('abort');
+                };
+                http.onerror = function() {
+                    console.log('error');
+                    hasError = true;
+                };
+                http.onloadend = function() {
+                    console.log(http.getAllResponseHeaders());
+                    console.log(http.response);
+                    
+                    if (!hasError) commit('stage.addNew', url);                    
+                    else alert("Website cannot be loaded in iframe");
+                };
+                http.send();
+                */
+            }
+        }
     }
 });

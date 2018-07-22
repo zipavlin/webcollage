@@ -100,6 +100,15 @@
             // init empty values
             this.$store.commit('item.setInitialState', this.index);
         },
+        mounted() {
+            // register iframe listener
+            this.$refs.child.onload = function (e) {
+                console.log('load', this.$refs.child.contentWindow.document);
+            }.bind(this);
+            this.$refs.child.onloadend = function () {
+                console.log('load end');
+            }
+        },
         methods: {
             saveHistory() {
                 history.saveSnapshot();

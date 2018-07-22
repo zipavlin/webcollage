@@ -7,7 +7,7 @@
                 <button id="zoom-out" @click="$store.commit('stage.zoomOut')" title="zoom out">-</button>
                 <button id="zoom-in" @click="$store.commit('stage.zoomIn')" title="zoom in">+</button>
                 <hr>
-                <button id="add-new" @click="$store.commit('stage.addNew')" title="add new component to collage">add new component</button>
+                <button id="add-new" @click="$store.dispatch('addNew')" title="add new component to collage">add new component</button>
                 <hr>
                 <button id="clear" @click="$store.commit('stage.clear')" title="clear collage">clear</button>
                 <button id="export" @click="$store.commit('stage.export')" title="export collage">export</button>
