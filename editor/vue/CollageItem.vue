@@ -103,7 +103,7 @@
         mounted() {
             // register iframe listener
             this.$refs.child.onload = function (e) {
-                console.log('load', this.$refs.child.contentWindow.document);
+                console.log('load', this.$refs.child.contentWindow.length);
             }.bind(this);
             this.$refs.child.onloadend = function () {
                 console.log('load end');
