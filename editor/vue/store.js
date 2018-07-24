@@ -182,6 +182,7 @@ export default new Vuex.Store({
             state.items[id].height = bottom - top;
             state.items[id].x = state.items[id].x + left;
             state.items[id].y = state.items[id].y + top;
+            // TODO: we should probably also reposition clip point at this stage
             state.items[id].childX = state.items[id].childX - left;
             state.items[id].childY = state.items[id].childY - top;
         },
